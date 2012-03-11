@@ -1,0 +1,12 @@
+Simple script to post on wordpress using the shell.
+
+It requires a .wposter file on the home, with the location and login informations of the blog.
+See the example in wposter.conf.
+
+Requires wordpresslib and configobj to run.
+
+Uses the system editor to edit the post.
+
+Released under GPL3.
+
+
