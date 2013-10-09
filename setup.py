@@ -9,7 +9,7 @@ setup(
   description='Python script to post on wordpress blogs',
   author="Salvo 'LtWorf' Tomaselli",
   author_email='tiposchi@tiscali.it',
-  scripts=['wposter.py'],
+  scripts=['wposter'],
   license = "GPL3",
   keywords = "wordpress, editor, terminal",
   url = "https://github.com/ltworf/wposter",
