@@ -25,15 +25,23 @@ import subprocess
 import os
 from configobj import ConfigObj
 
-def load_conf():
+def load_conf(blog='default'):
     try:
         config = ConfigObj("%s/.wposter"% os.getenv("HOME"))
-        wordpress = config['url']
-        user = config['user']
-        password = config['password']
     except:
         sys.stderr.write("Unable to load \"%s/.wposter\". Please create it and retry\n" % os.getenv("HOME"))
         sys.exit(1)
+        
+    try:    
+        blog_config = config[blog]
+    except:
+        sys.stderr.write('%s blog not found in the configuration file' % blog)
+        sys.exit(1)
+
+    wordpress = blog_config['url']
+    user = blog_config['user']
+    password = blog_config['password']
+
     return wordpress,user,password
 
 def get_wordpress(b_id=0):
