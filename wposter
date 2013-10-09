@@ -20,12 +20,34 @@
 # author Salvo "LtWorf" Tomaselli <tiposchi@tiscali.it>
 
 import wordpresslib
+from configobj import ConfigObj
+
 import sys
 import subprocess
 import os
-from configobj import ConfigObj
+import argparse
+
+def get_version():
+    '''Returns the version string'''
+    r = "wposter\n"
+    r += "Copyright (C) 2013 Salvo 'LtWorf' Tomaselli.\n"
+    r += "This program comes with ABSOLUTELY NO WARRANTY.\n"
+    r += "This is free software, and you are welcome to redistribute it\n"
+    r += "under certain conditions.\n"
+    r += "For details see the GPLv3 License.\n" 
+    r += "\n" 
+    r += "Written by Salvo 'LtWorf' Tomaselli <tiposchi@tiscali.it>\n" 
+    r += "https://github.com/ltworf/wposter\n"
+    return r
 
 def load_conf(blog='default'):
+    '''
+    blog is the name of the wanted blog, as it is in the settings file.
+    it will return a tuple containing url,username,password
+    for the wanted blog.
+
+    If an error occurs, the function calls exit
+    '''
     try:
         config = ConfigObj("%s/.wposter"% os.getenv("HOME"))
     except:
@@ -44,8 +66,7 @@ def load_conf(blog='default'):
 
     return wordpress,user,password
 
-def get_wordpress(b_id=0):
-    wordpress,user,password=load_conf()
+def get_wordpress(wordpress,user,password,b_id=0):
     wp = wordpresslib.WordPressClient(wordpress, user, password)
     
     # select blog id
@@ -53,7 +74,10 @@ def get_wordpress(b_id=0):
     return wp
 
 def read_long_text(descr):
-    
+    '''
+    Spawns the user's favorite editor and returns the text that
+    was typed into it.
+    '''
     tempfile=os.tmpnam()
     process = subprocess.Popen('%s %s'%(os.getenv("EDITOR","/usr/bin/editor"),tempfile), shell=True)
     process.wait()
@@ -64,14 +88,46 @@ def read_long_text(descr):
     f.close()
     return text
 
-def write_post():
+def write_post(filename = None,title = None):
+    '''
+    Returns a wordpress post object, ready to be posted in a blog
+
+    filename is the file containing the post, if None this function will
+    spawn $EDITOR or /usr/bin/editor to let the user edit the post.
+
+    title is the title, if None the user will be prompted to insert a title
+    '''
     post = wordpresslib.WordPressPost()
-    post.title = raw_input('Title: ')
+
+    if title is None:
+        post.title = raw_input('Title: ')
+    else:
+        post.title = title
     
-    post.description=read_long_text('Body: ')
-    
-    if raw_input('Confirm? [y/N] ') != 'y':
-        sys.exit(0)
+    if filename is None:
+        post.description=read_long_text('Body: ')
+    else:
+       f = open(filename) 
+       post.description='\n'.join(f.readlines())
+       f.close()
     return post
 
-get_wordpress().newPost(write_post(),True)
+def main():
+   parser = argparse.ArgumentParser(description='Post on WordPress')
+
+   parser.add_argument('-t','--title',default=None,type=str,help = 'Title for the new post')
+   parser.add_argument('-f','--file',default=None,type=str,help = 'Text file containing the new post')
+   parser.add_argument('-b','--blog',default='default',type=str,help = 'Name of the blog, in case more than one blogs are configured')
+   parser.add_argument('-v','--version',action='version', version=get_version())
+
+   options = parser.parse_args()
+
+   wordpress,user,password=load_conf(options.blog)
+   blog = get_wordpress(wordpress,user,password)
+   
+   post = write_post(options.file,options.title)
+
+   blog.newPost(post,True)
+
+
+main()
